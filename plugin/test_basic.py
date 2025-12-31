@@ -94,14 +94,21 @@ def step3_test_inference(engine):
             add_generation_prompt=True
         )
 
-        print(f"原始消息: {messages[0]['content']}")
-        print(f"\nChat template格式化后的prompt:")
-        print(f"{prompt}")
-        print()
+        print(f"{'='*60}")
+        print("完整的 Prompt 结构:")
+        print(f"{'='*60}")
+        print(f"原始消息: {messages}")
+        print(f"\n应用 Chat Template 后的完整 Prompt:")
+        print(f"{'─'*60}")
+        print(repr(prompt))  # 使用 repr 显示所有特殊字符
+        print(f"{'─'*60}")
+        print(f"\n实际文本内容:")
+        print(prompt)
+        print(f"{'='*60}")
 
         # 获取采样参数
         sampling_params = engine.get_default_sampling_params()
-        sampling_params.max_new_tokens = 200  # 增加输出长度以容纳思考内容
+        sampling_params.max_new_tokens = 1000  # 增加到1000以看到完整响应
         sampling_params.temperature = 0.7
         sampling_params.top_p = 0.9
 
