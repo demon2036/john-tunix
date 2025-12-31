@@ -44,21 +44,23 @@ def step2_init_engine():
         from sgl_jax.srt.entrypoints.engine import Engine
 
         # 最简单的配置
-        # Qwen2.5-0.5B有14个attention heads，必须用能整除14的tp_size
+        # Qwen3-1.7B有16个attention heads，可以被8整除
         args = {
-            "model_path": "Qwen/Qwen2.5-0.5B",  # 使用更小的模型快速测试
-            "context_length": 512,
-            "tp_size": 2,  # 使用2个TPU设备（14 % 2 = 0）
-            "device_indexes": [0, 1],
-            "mem_fraction_static": 0.2,
+            "model_path": "Qwen/Qwen2.5-1.5B",  # 使用Qwen2.5-1.5B（HF上有）
+            "context_length": 2048,
+            "tp_size": 8,  # 使用全部8个TPU设备
+            "device_indexes": list(range(8)),
+            "mem_fraction_static": 0.6,
             "disable_radix_cache": False,
-            "load_format": "dummy",  # 先用随机权重测试
+            "load_format": "auto",  # 从HuggingFace下载真实权重
         }
 
         print("创建引擎...")
         print(f"模型: {args['model_path']}")
         print(f"TP大小: {args['tp_size']}")
-        print(f"负载格式: {args['load_format']} (随机权重)")
+        print(f"负载格式: {args['load_format']} (HuggingFace真实权重)")
+        print("正在从HuggingFace下载模型...")
+
 
         engine = Engine(**args)
         print("✅ 引擎创建成功")
@@ -77,30 +79,30 @@ def step3_test_inference(engine):
 
     try:
         # 准备输入
-        prompt = "Hello, my name is"
+        prompt = "你好吗，你是谁"
 
         # 获取采样参数
         sampling_params = engine.get_default_sampling_params()
-        sampling_params.max_new_tokens = 20
-        sampling_params.temperature = 0.0
+        sampling_params.max_new_tokens = 100  # 增加输出长度
+        sampling_params.temperature = 0.8  # 增加随机性
 
         print(f"输入: {prompt}")
         print("生成中...")
 
         # 生成
         outputs = engine.generate(
-            prompt=prompt,  # 注意是 prompt 不是 prompts
+            prompt=prompt,
             sampling_params=sampling_params.convert_to_dict(),
         )
 
         print(f"✅ 生成成功!")
-        print(f"输出结果: {outputs}")
-        print(f"输出类型: {type(outputs)}")
-        # 尝试打印输出
-        if isinstance(outputs, dict):
-            print(f"输出内容: {outputs}")
-        else:
-            print(f"输出: {outputs[0].outputs[0].text if hasattr(outputs[0], 'outputs') else outputs}")
+        print(f"\n{'='*50}")
+        print(f"生成文本: {outputs['text']}")
+        print(f"{'='*50}")
+        print(f"\n元信息:")
+        print(f"  - Prompt tokens: {outputs['meta_info']['prompt_tokens']}")
+        print(f"  - Completion tokens: {outputs['meta_info']['completion_tokens']}")
+        print(f"  - E2E latency: {outputs['meta_info']['e2e_latency']:.3f}s")
         return True
     except Exception as e:
         print(f"❌ 推理失败: {e}")
