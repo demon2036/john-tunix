@@ -77,21 +77,20 @@ def step3_test_inference(engine):
 
     try:
         # 准备输入
-        prompts = ["Hello, my name is"]
+        prompt = "Hello, my name is"
 
         # 获取采样参数
         sampling_params = engine.get_default_sampling_params()
         sampling_params.max_new_tokens = 20
         sampling_params.temperature = 0.0
 
-        print(f"输入: {prompts[0]}")
+        print(f"输入: {prompt}")
         print("生成中...")
 
         # 生成
         outputs = engine.generate(
-            input_ids=None,  # 会自动 tokenize
-            prompts=prompts,
-            sampling_params=[sampling_params.convert_to_dict()],
+            prompt=prompt,  # 注意是 prompt 不是 prompts
+            sampling_params=sampling_params.convert_to_dict(),
         )
 
         print(f"✅ 生成成功!")
