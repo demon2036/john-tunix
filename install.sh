@@ -66,7 +66,7 @@ pip install -e .
 cd -
 
 # 验证 SGLang-JAX
-python -c "import sglang_jax; print('✅ SGLang-JAX installed successfully')" || {
+python -c "import sgl_jax; print('✅ SGLang-JAX installed successfully')" || {
     echo "⚠️  WARNING: SGLang-JAX installation may have issues"
 }
 

@@ -32,7 +32,7 @@ def step1_check_environment():
 
     # 检查 SGLang-JAX
     try:
-        import sglang_jax
+        import sgl_jax
         print(f"✅ SGLang-JAX 已安装")
         return True
     except ImportError:
@@ -46,7 +46,7 @@ def step2_init_engine():
     print("=" * 50)
 
     try:
-        from sglang_jax.srt.entrypoints.engine import Engine
+        from sgl_jax.srt.entrypoints.engine import Engine
 
         # 最简单的配置
         args = {
