@@ -94,7 +94,13 @@ def step3_test_inference(engine):
         )
 
         print(f"✅ 生成成功!")
-        print(f"输出: {outputs[0].outputs[0].text}")
+        print(f"输出结果: {outputs}")
+        print(f"输出类型: {type(outputs)}")
+        # 尝试打印输出
+        if isinstance(outputs, dict):
+            print(f"输出内容: {outputs}")
+        else:
+            print(f"输出: {outputs[0].outputs[0].text if hasattr(outputs[0], 'outputs') else outputs}")
         return True
     except Exception as e:
         print(f"❌ 推理失败: {e}")
