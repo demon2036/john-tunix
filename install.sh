@@ -19,9 +19,13 @@ rm Miniconda3-latest-Linux-x86_64.sh
 ~/miniconda3/bin/conda init bash
 eval "$(~/miniconda3/bin/conda shell.bash hook)"
 
+# 配置 conda（禁用自动激活 base，接受 TOS）
+conda config --set auto_activate_base false
+conda config --set channel_priority flexible
+
 # 创建 Python 3.11 环境（Tunix 和 SGLang-JAX 需要）
 echo "Creating Python 3.11 environment..."
-conda create -n base-python311 python=3.11 -y
+conda create -n base-python311 python=3.11 -y -c conda-forge
 conda activate base-python311
 
 echo "✅ Miniconda3 installed with Python 3.11"
