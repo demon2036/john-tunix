@@ -4,12 +4,11 @@
 目标：验证 SGLang-JAX 能否在 TPU 上运行
 
 步骤：
-1. 检查环境（JAX, TPU, SGLang-JAX）
+1. 检查环境（JAX, SGLang-JAX）
 2. 初始化 SGLang-JAX 引擎
 3. 执行简单推理
 """
 
-import jax
 import sys
 
 def step1_check_environment():
@@ -18,16 +17,12 @@ def step1_check_environment():
     print("步骤 1: 检查环境")
     print("=" * 50)
 
-    # 检查 JAX
-    print(f"JAX 版本: {jax.__version__}")
-
-    # 检查 TPU
-    devices = jax.devices()
-    print(f"JAX 设备: {devices}")
-    print(f"设备数量: {len(devices)}")
-
-    if len(devices) == 0:
-        print("❌ 没有检测到设备")
+    # 检查 JAX（不初始化设备，避免与Engine冲突）
+    try:
+        import jax
+        print(f"✅ JAX 版本: {jax.__version__}")
+    except ImportError:
+        print("❌ JAX 未安装")
         return False
 
     # 检查 SGLang-JAX
@@ -49,17 +44,22 @@ def step2_init_engine():
         from sgl_jax.srt.entrypoints.engine import Engine
 
         # 最简单的配置
+        # TPU v6e-8 有8个设备，2x4 topology
         args = {
-            "model_path": "Qwen/Qwen3-1.7B",  # 从 HF 下载
+            "model_path": "Qwen/Qwen2.5-0.5B",  # 使用更小的模型快速测试
             "context_length": 512,
-            "tp_size": len(jax.devices()),
-            "device_indexes": list(range(len(jax.devices()))),
+            "tp_size": 8,  # 8个TPU设备
+            "device_indexes": list(range(8)),
             "mem_fraction_static": 0.2,
             "disable_radix_cache": False,
             "load_format": "dummy",  # 先用随机权重测试
         }
 
         print("创建引擎...")
+        print(f"模型: {args['model_path']}")
+        print(f"TP大小: {args['tp_size']}")
+        print(f"负载格式: {args['load_format']} (随机权重)")
+
         engine = Engine(**args)
         print("✅ 引擎创建成功")
         return engine
