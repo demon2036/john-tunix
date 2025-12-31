@@ -1,6 +1,6 @@
 #!/bin/bash
 # Tunix + Qwen3-1.7B GSM8K 依赖安装脚本
-# 使用系统 Python 3.11 + venv（避免 conda TOS 问题）
+# 使用系统 Python 3.12 + venv
 
 set -e
 
@@ -8,10 +8,18 @@ echo "========================================="
 echo "Installing Tunix Dependencies for TPU"
 echo "========================================="
 
-# 1. 创建 Python 3.11 虚拟环境
-echo "Creating Python 3.11 virtual environment..."
+# 0. 安装 Python 3.12（如果未安装）
+if ! command -v python3.12 &> /dev/null; then
+    echo "Installing Python 3.12..."
+    sudo add-apt-repository ppa:deadsnakes/ppa -y
+    sudo apt-get update
+    sudo apt-get install -y python3.12 python3.12-venv python3.12-dev
+fi
+
+# 1. 创建 Python 3.12 虚拟环境
+echo "Creating Python 3.12 virtual environment..."
 rm -rf ~/tunix-venv
-python3.11 -m venv ~/tunix-venv
+python3.12 -m venv ~/tunix-venv
 source ~/tunix-venv/bin/activate
 
 # 验证 Python 版本
