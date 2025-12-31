@@ -77,15 +77,34 @@ def step3_test_inference(engine):
     print("=" * 50)
 
     try:
-        # 准备输入
-        prompt = "你好吗，你是谁"
+        from transformers import AutoTokenizer
+
+        # 加载tokenizer
+        tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3-1.7B")
+
+        # 使用chat template格式化消息
+        messages = [
+            {"role": "user", "content": "你好吗，你是谁"}
+        ]
+
+        # 应用chat template
+        prompt = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+
+        print(f"原始消息: {messages[0]['content']}")
+        print(f"\nChat template格式化后的prompt:")
+        print(f"{prompt}")
+        print()
 
         # 获取采样参数
         sampling_params = engine.get_default_sampling_params()
-        sampling_params.max_new_tokens = 100  # 增加输出长度
-        sampling_params.temperature = 0.8  # 增加随机性
+        sampling_params.max_new_tokens = 200  # 增加输出长度以容纳思考内容
+        sampling_params.temperature = 0.7
+        sampling_params.top_p = 0.9
 
-        print(f"输入: {prompt}")
         print("生成中...")
 
         # 生成
@@ -96,7 +115,8 @@ def step3_test_inference(engine):
 
         print(f"✅ 生成成功!")
         print(f"\n{'='*50}")
-        print(f"生成文本: {outputs['text']}")
+        print(f"生成文本:")
+        print(outputs['text'])
         print(f"{'='*50}")
         print(f"\n元信息:")
         print(f"  - Prompt tokens: {outputs['meta_info']['prompt_tokens']}")
