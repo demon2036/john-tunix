@@ -11,15 +11,20 @@ echo "========================================="
 # 1. 安装 Miniconda3（删除旧环境）
 echo "Installing Miniconda3..."
 rm -rf ~/miniconda3
-wget -q https://repo.anaconda.com/miniconda/Miniconda3-py310_24.1.2-0-Linux-x86_64.sh
-bash Miniconda3-py310_24.1.2-0-Linux-x86_64.sh -b -u
-rm Miniconda3-py310_24.1.2-0-Linux-x86_64.sh
+wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh -b -u
+rm Miniconda3-latest-Linux-x86_64.sh
 
 # 初始化 conda
 ~/miniconda3/bin/conda init bash
 eval "$(~/miniconda3/bin/conda shell.bash hook)"
 
-echo "✅ Miniconda3 installed"
+# 创建 Python 3.11 环境（Tunix 和 SGLang-JAX 需要）
+echo "Creating Python 3.11 environment..."
+conda create -n base-python311 python=3.11 -y
+conda activate base-python311
+
+echo "✅ Miniconda3 installed with Python 3.11"
 
 # 2. 安装 JAX for TPU
 echo "Installing JAX for TPU..."
@@ -73,6 +78,7 @@ echo "========================================="
 echo ""
 echo "To use in new sessions, run:"
 echo "  eval \"\$(~/miniconda3/bin/conda shell.bash hook)\""
+echo "  conda activate base-python311"
 echo ""
 echo "Next steps:"
 echo "1. Run test script: python plugin/test_basic.py"
