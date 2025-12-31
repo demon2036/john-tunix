@@ -18,8 +18,7 @@
 1. Python 3.11+
 2. Google Cloud 账号和项目 (civil-rarity-482610-s5)
 3. TPU v6e-8 实例 (node-1, europe-west4-a)
-4. HuggingFace 账号和 token
-5. GitHub 账号
+4. GitHub 账号
 
 ### 安装步骤
 
@@ -38,10 +37,7 @@ git clone https://github.com/google/tunix.git
 cd john-tunix
 bash install.sh
 
-# 4. 设置 HuggingFace Token
-export HF_TOKEN=your_huggingface_token
-
-# 5. 运行训练
+# 4. 运行训练
 bash scripts/train_qwen3_gsm8k.sh
 ```
 
@@ -54,7 +50,6 @@ cd john-tunix
 
 # 2. 设置环境变量
 export PROJECT_ID=civil-rarity-482610-s5
-export HF_TOKEN=your_huggingface_token
 
 # 3. 运行 TPU 训练
 bash setup_tpu.sh
@@ -201,13 +196,6 @@ A:
 1. 减小 `batch_size` 到 1
 2. 减小 `num_generations` 到 2
 3. 考虑使用 LoRA（需要修改训练脚本）
-
-### Q: 如何获取 HuggingFace Token?
-
-A:
-1. 访问 https://huggingface.co/settings/tokens
-2. 创建新的 Access Token
-3. 设置环境变量: `export HF_TOKEN=your_token`
 
 ### Q: 训练失败，如何调试？
 

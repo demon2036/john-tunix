@@ -27,12 +27,6 @@ echo "========================================="
 warmup_steps=$(awk "BEGIN {printf \"%.0f\", $warmup_ratio * $max_steps}")
 echo "Warmup steps: $warmup_steps"
 
-# 检查 HF Token
-if [ -z "$HF_TOKEN" ]; then
-    echo "WARNING: HF_TOKEN not set. Model download may fail."
-    echo "Set it with: export HF_TOKEN=your_token"
-fi
-
 # 运行训练（需要在 tunix 目录下运行）
 cd /home/john/test/tunix || { echo "ERROR: tunix directory not found"; exit 1; }
 

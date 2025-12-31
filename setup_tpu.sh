@@ -42,10 +42,6 @@ echo "========================================="
 echo "TPU Training Environment Setup"
 echo "========================================="
 
-# 设置环境变量
-export HF_TOKEN=${HF_TOKEN:-""}
-export HF_HUB_ENABLE_HF_TRANSFER=1
-
 # 克隆仓库
 cd ~
 if [ ! -d "john-tunix" ]; then
@@ -93,20 +89,10 @@ echo "Starting training on TPU..."
 echo "NOTE: This will run in the foreground. Press Ctrl+C to detach (training will continue)."
 echo ""
 
-# 传递 HF_TOKEN 到 TPU
-if [ -n "$HF_TOKEN" ]; then
-    echo "Passing HF_TOKEN to TPU..."
-    gcloud compute tpus tpu-vm ssh $TPU_NAME \
-      --zone=$ZONE \
-      --project=$PROJECT_ID \
-      --command="export HF_TOKEN=$HF_TOKEN && bash ~/tpu_train.sh"
-else
-    echo "WARNING: HF_TOKEN not set. Model download may fail."
-    gcloud compute tpus tpu-vm ssh $TPU_NAME \
-      --zone=$ZONE \
-      --project=$PROJECT_ID \
-      --command="bash ~/tpu_train.sh"
-fi
+gcloud compute tpus tpu-vm ssh $TPU_NAME \
+  --zone=$ZONE \
+  --project=$PROJECT_ID \
+  --command="bash ~/tpu_train.sh"
 
 echo "========================================="
 echo "Training launched on TPU!"
