@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.11
+#!/usr/bin/env python
 """SGLang-JAX 最基础的推理测试
 
 目标：验证 SGLang-JAX 能否在 TPU 上运行
