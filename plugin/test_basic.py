@@ -44,12 +44,12 @@ def step2_init_engine():
         from sgl_jax.srt.entrypoints.engine import Engine
 
         # 最简单的配置
-        # TPU v6e-8 有8个设备，2x4 topology
+        # Qwen2.5-0.5B有14个attention heads，必须用能整除14的tp_size
         args = {
             "model_path": "Qwen/Qwen2.5-0.5B",  # 使用更小的模型快速测试
             "context_length": 512,
-            "tp_size": 8,  # 8个TPU设备
-            "device_indexes": list(range(8)),
+            "tp_size": 2,  # 使用2个TPU设备（14 % 2 = 0）
+            "device_indexes": [0, 1],
             "mem_fraction_static": 0.2,
             "disable_radix_cache": False,
             "load_format": "dummy",  # 先用随机权重测试
