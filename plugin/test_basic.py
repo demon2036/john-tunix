@@ -43,13 +43,12 @@ def step2_init_engine():
     try:
         from sgl_jax.srt.entrypoints.engine import Engine
 
-        # 最简单的配置
-        # Qwen2.5-1.5B有12个attention heads，使用4个设备（12 % 4 = 0）
+        # Qwen3-1.7B配置
         args = {
-            "model_path": "Qwen/Qwen2.5-1.5B",
+            "model_path": "Qwen/Qwen3-1.7B",
             "context_length": 2048,
-            "tp_size": 4,  # 使用4个TPU设备
-            "device_indexes": [0, 1, 2, 3],
+            "tp_size": 8,  # Qwen3-1.7B应该有16个attention heads，能被8整除
+            "device_indexes": list(range(8)),
             "mem_fraction_static": 0.6,
             "disable_radix_cache": False,
             "load_format": "auto",  # 从HuggingFace下载真实权重
