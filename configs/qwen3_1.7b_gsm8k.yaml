@@ -25,6 +25,15 @@ dataset_name: "gsm8k"
 data_source: "tfds"
 
 rl_training_config:
+  actor_optimizer_config:
+    opt_type: "adamw"
+    peak_value: 3e-6
+    schedule_type: "warmup_cosine_decay_schedule"
+    warmup_ratio: 0.1
+    b1: 0.9
+    b2: 0.99
+    weight_decay: 0.1
+    max_grad_norm: 0.1
   metrics_logging_options:
     project_name: "qwen3-grpo-gsm8k"
     run_name: "qwen3-1.7b-grpo"
