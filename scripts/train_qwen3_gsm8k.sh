@@ -20,6 +20,5 @@ python3 -m tunix.cli.grpo_main \
   tunix/cli/base_config.yaml \
   override_config_file="${PROJECT_ROOT}/configs/qwen3_1.7b_gsm8k.yaml" \
   reference_model_config.model_download_path="/tmp/models/qwen3" \
-  batch_size=${batch_size:-1} \
   rl_training_config.max_steps=${max_steps:-100} \
   reward_functions="['${PROJECT_ROOT}/plugin/reward_fn/gsm8k_qwen3.py']"
