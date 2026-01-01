@@ -5,8 +5,8 @@ import re
 from typing import List
 
 
-def extract_answer(text: str) -> str | None:
-    """Extract numerical answer from completion."""
+def _extract_answer(text: str) -> str | None:
+    """Extract numerical answer from completion (private helper)."""
     # Try #### {number} format first
     match = re.search(r"####\s*([\-\d\.,]+)", text)
     if match:
@@ -24,7 +24,7 @@ def check_answer(prompts: List[str], completions: List[str], answer: List[str], 
     """Main reward: correct answer gets 3.0, wrong gets 0.0"""
     scores = []
     for completion, truth in zip(completions, answer):
-        extracted = extract_answer(completion)
+        extracted = _extract_answer(completion)
         if extracted is None:
             scores.append(0.0)
             continue
