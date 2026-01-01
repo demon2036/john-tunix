@@ -3,6 +3,13 @@
 
 set -ex
 
+# Check HF_TOKEN
+if [ -z "$HF_TOKEN" ]; then
+  echo "ERROR: HF_TOKEN environment variable not set"
+  echo "Please set it with: export HF_TOKEN=your_token_here"
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 TUNIX_DIR="$(dirname "$PROJECT_ROOT")/tunix"
