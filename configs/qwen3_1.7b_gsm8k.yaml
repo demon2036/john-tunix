@@ -24,7 +24,7 @@ tokenizer_config:
 dataset_name: "gsm8k"
 data_source: "tfds"
 
-batch_size: 32
+batch_size: 16
 
 grpo_config:
   num_generations: 8
