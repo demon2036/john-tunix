@@ -4,17 +4,17 @@ reference_model_config:
   model_id: "Qwen/Qwen3-1.7B"
   model_source: "huggingface"
   mesh:
-    shape: "(8,1)"
+    shape: "(4,2)"
     axis_names: "('fsdp','tp')"
 
 actor_model_config:
   mesh:
-    shape: "(8,1)"  # Full FSDP for memory efficiency
+    shape: "(4,2)"  # 4-way FSDP + 2-way TP for vocab sharding
     axis_names: "('fsdp','tp')"
 
 rollout_model_config:
   mesh:
-    shape: "(8,1)"  # Full FSDP/DP for rollout throughput
+    shape: "(4,2)"  # 4-way FSDP + 2-way TP
     axis_names: "('fsdp','tp')"
 
 tokenizer_config:
