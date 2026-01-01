@@ -212,6 +212,24 @@ rollout_config:
 
 ## 常见问题
 
+### Q: 多主机 TPU 错误 "non-addressable devices"
+
+A: 这是多主机 JAX 的常见问题。运行修复脚本：
+```bash
+# 在所有节点上运行
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a \
+  --worker=all --command='
+  source ~/tunix-venv/bin/activate
+  cd ~/john-tunix
+  python3 scripts/fix_multihost.py
+  python3 scripts/fix_sharding.py
+'
+```
+
+修复的内容：
+- `fix_multihost.py` - 修复 sampler.py 使用 `process_allgather(x, tiled=True)`
+- `fix_sharding.py` - 修复 sharding_utils.py 将全局数组转换为本地数据
+
 ### Q: JAX 报 "Failed to get global TPU topology"
 
 A: TPU 镜像错误。必须使用 `v2-alpha-tpuv6e`，不能用 `tpu-ubuntu2204-base`。
