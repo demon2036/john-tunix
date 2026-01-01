@@ -28,6 +28,7 @@ rl_training_config:
   metrics_logging_options:
     project_name: "qwen3-grpo-gsm8k"
     run_name: "qwen3-1.7b-grpo"
+    log_dir: "/tmp/tensorboard/grpo_qwen3"
 
 reward_functions:
   - "plugin/reward_fn/gsm8k_qwen3.py"
