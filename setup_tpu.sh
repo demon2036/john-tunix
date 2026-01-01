@@ -1,116 +1,121 @@
 #!/bin/bash
-# TPU 连接和运行脚本
+# TPU Setup and Training via GitHub
+# Usage: ./setup_tpu.sh --hf-token=<your_token> [--wandb-key=<key>] [--skip-install]
 
 set -e
 
-TPU_NAME="node-1"
+# ============== 配置 ==============
+TPU_NAME="john-tpu-v6e-8"
 ZONE="europe-west4-a"
-TPU_TYPE="v6e-8"
-PROJECT_ID=${PROJECT_ID:-"civil-rarity-482610-s5"}
+PROJECT_ID="${PROJECT_ID:-civil-rarity-482610-s5}"
+REPO_URL="https://github.com/demon2036/john-tunix.git"
+TUNIX_URL="https://github.com/google/tunix.git"
 
-echo "========================================="
-echo "TPU Setup and Training Launch"
-echo "========================================="
-echo "TPU Name: $TPU_NAME"
-echo "Zone: $ZONE"
-echo "TPU Type: $TPU_TYPE"
-echo "Project ID: $PROJECT_ID"
-echo "========================================="
+# ============== 参数解析 ==============
+HF_TOKEN=""
+WANDB_KEY=""
+SKIP_INSTALL=false
 
-# 检查是否设置了 PROJECT_ID
-if [ -z "$PROJECT_ID" ]; then
-    echo "ERROR: PROJECT_ID not set"
-    echo "Please set it: export PROJECT_ID=your-gcp-project-id"
-    exit 1
+for arg in "$@"; do
+  case $arg in
+    --hf-token=*) HF_TOKEN="${arg#*=}" ;;
+    --wandb-key=*) WANDB_KEY="${arg#*=}" ;;
+    --skip-install) SKIP_INSTALL=true ;;
+    --help|-h)
+      echo "Usage: ./setup_tpu.sh --hf-token=<token> [options]"
+      echo ""
+      echo "Options:"
+      echo "  --hf-token=TOKEN    HuggingFace token (required)"
+      echo "  --wandb-key=KEY     Weights & Biases API key (optional)"
+      echo "  --skip-install      Skip dependency installation"
+      echo "  --help, -h          Show this help message"
+      exit 0
+      ;;
+    *) echo "Unknown arg: $arg"; exit 1 ;;
+  esac
+done
+
+# 检查必需参数
+if [ -z "$HF_TOKEN" ]; then
+  echo "ERROR: --hf-token is required"
+  echo "Usage: ./setup_tpu.sh --hf-token=<token>"
+  exit 1
 fi
 
-# 检查 TPU 状态
-echo "Checking TPU status..."
-gcloud compute tpus tpu-vm describe $TPU_NAME \
-  --zone=$ZONE \
-  --project=$PROJECT_ID || {
-    echo "ERROR: TPU not found or not accessible"
-    exit 1
-}
-
-# 创建 TPU 启动脚本
-cat > /tmp/tpu_train.sh << 'EOF'
+# ============== 远程脚本 ==============
+REMOTE_SCRIPT=$(cat <<'REMOTE_EOF'
 #!/bin/bash
 set -e
+
+HF_TOKEN="__HF_TOKEN__"
+WANDB_KEY="__WANDB_KEY__"
+SKIP_INSTALL="__SKIP_INSTALL__"
 
 echo "========================================="
 echo "TPU Training Environment Setup"
 echo "========================================="
 
-# 检查 john-tunix 是否存在 (由 scp 上传)
 cd ~
-if [ ! -d "john-tunix" ]; then
-    echo "ERROR: john-tunix directory not found on TPU."
-    echo "Did the SCP upload fail?"
-    exit 1
-fi
-echo "Found john-tunix directory."
-cd john-tunix
 
-# 克隆 tunix（如果需要）
-# Assume tunix should be in home dir
-if [ ! -d "../tunix" ]; then
-    echo "Cloning tunix repository..."
-    cd ~
-    git clone https://github.com/google/tunix.git
-    cd tunix
+# 1. Clone or pull john-tunix
+if [ -d "john-tunix" ]; then
+  echo "[1/4] Updating john-tunix..."
+  cd john-tunix && git pull && cd ~
 else
-    echo "Updating tunix repository..."
-    cd ../tunix
-    git pull
+  echo "[1/4] Cloning john-tunix..."
+  git clone https://github.com/demon2036/john-tunix.git
 fi
 
-# 安装依赖
-echo "Installing dependencies..."
-cd ~/john-tunix
-bash install.sh
+# 2. Clone or pull tunix
+if [ -d "tunix" ]; then
+  echo "[2/4] Updating tunix..."
+  cd tunix && git pull && cd ~
+else
+  echo "[2/4] Cloning tunix..."
+  git clone https://github.com/google/tunix.git
+fi
 
-# 运行训练
-echo "Starting training..."
+# 3. 智能检测安装
+if [ "$SKIP_INSTALL" = "true" ]; then
+  echo "[3/4] Skipping install (--skip-install flag)..."
+elif [ -d "tunix-venv" ] && [ -f "tunix-venv/bin/activate" ]; then
+  echo "[3/4] Virtual environment exists, skipping install..."
+else
+  echo "[3/4] Running install.sh (this may take a few minutes)..."
+  cd ~/john-tunix && bash install.sh
+fi
+
+# 4. 激活 venv 并运行训练
+echo "[4/4] Starting training..."
+source ~/tunix-venv/bin/activate
+export HF_TOKEN="$HF_TOKEN"
+[ -n "$WANDB_KEY" ] && export WANDB_API_KEY="$WANDB_KEY"
+
+cd ~/john-tunix
 bash scripts/train_qwen3_gsm8k.sh
 
 echo "========================================="
 echo "Training completed!"
 echo "========================================="
-EOF
+REMOTE_EOF
+)
 
-# 获取脚本所在目录
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# 替换占位符
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__HF_TOKEN__/$HF_TOKEN}"
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__WANDB_KEY__/$WANDB_KEY}"
+REMOTE_SCRIPT="${REMOTE_SCRIPT//__SKIP_INSTALL__/$SKIP_INSTALL}"
 
-# 上传当前目录到 TPU
-echo "Uploading local john-tunix directory to TPU..."
-# Ensure target dir exists or scp might behave differently depending on existence
-# We will just scp recursively to ~/john-tunix
-gcloud compute tpus tpu-vm scp --recurse "$SCRIPT_DIR" $TPU_NAME:~/ \
-  --zone=$ZONE \
-  --project=$PROJECT_ID
-
-# 上传并执行脚本
-echo "Uploading training script to TPU..."
-gcloud compute tpus tpu-vm scp /tmp/tpu_train.sh $TPU_NAME:~/tpu_train.sh \
-  --zone=$ZONE \
-  --project=$PROJECT_ID
-
-echo "Starting training on TPU..."
-echo "NOTE: This will run in the foreground. Press Ctrl+C to detach (training will continue)."
-echo ""
-
-gcloud compute tpus tpu-vm ssh $TPU_NAME \
-  --zone=$ZONE \
-  --project=$PROJECT_ID \
-  --command="bash ~/tpu_train.sh"
-
+# ============== 执行 ==============
 echo "========================================="
-echo "Training launched on TPU!"
+echo "TPU Training via GitHub"
+echo "========================================="
+echo "TPU: $TPU_NAME ($ZONE)"
+echo "Project: $PROJECT_ID"
+echo "Repo: $REPO_URL"
 echo "========================================="
 echo ""
-echo "To monitor training:"
-echo "  gcloud compute tpus tpu-vm ssh $TPU_NAME --zone=$ZONE --project=$PROJECT_ID"
-echo ""
-echo "To view logs:"
-echo "  tail -f /tmp/tensorboard/grpo_qwen3_1.7b/*.log"
+
+gcloud compute tpus tpu-vm ssh "$TPU_NAME" \
+  --zone="$ZONE" \
+  --project="$PROJECT_ID" \
+  --command="$REMOTE_SCRIPT"
