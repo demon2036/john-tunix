@@ -13,7 +13,7 @@
 
 **检查当前 TPU 镜像:**
 ```bash
-gcloud compute tpus tpu-vm describe john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm describe john-tpu-v6e-16 \
   --zone=europe-west4-a \
   --format='yaml(runtimeVersion)'
 ```
@@ -21,13 +21,13 @@ gcloud compute tpus tpu-vm describe john-tpu-v6e-8 \
 **如果镜像错误，必须删除重建:**
 ```bash
 # 删除
-gcloud compute tpus tpu-vm delete john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm delete john-tpu-v6e-16 \
   --zone=europe-west4-a --quiet
 
 # 重建 (使用正确镜像)
-gcloud compute tpus tpu-vm create john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm create john-tpu-v6e-16 \
   --zone=europe-west4-a \
-  --accelerator-type=v6e-8 \
+  --accelerator-type=v6e-16 \
   --version=v2-alpha-tpuv6e \
   --preemptible  # 可选，更容易获得资源
 ```
@@ -66,31 +66,38 @@ gcloud compute tpus tpu-vm list --zone=europe-west4-a
 
 ### 查看 TPU 详情
 ```bash
-gcloud compute tpus tpu-vm describe john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm describe john-tpu-v6e-16 \
   --zone=europe-west4-a \
   --format='yaml(runtimeVersion,state,acceleratorConfig)'
 ```
 
 ### SSH 连接
 ```bash
-gcloud compute tpus tpu-vm ssh john-tpu-v6e-8 \
+# 单节点
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 \
   --zone=europe-west4-a \
   --project=civil-rarity-482610-s5
+
+# 所有节点 (多主机)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 \
+  --zone=europe-west4-a \
+  --project=civil-rarity-482610-s5 \
+  --worker=all --command="hostname"
 ```
 
 ### 创建 TPU (正确方式)
 ```bash
-gcloud compute tpus tpu-vm create john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm create john-tpu-v6e-16 \
   --zone=europe-west4-a \
   --project=civil-rarity-482610-s5 \
-  --accelerator-type=v6e-8 \
+  --accelerator-type=v6e-16 \
   --version=v2-alpha-tpuv6e \
   --preemptible
 ```
 
 ### 删除 TPU
 ```bash
-gcloud compute tpus tpu-vm delete john-tpu-v6e-8 \
+gcloud compute tpus tpu-vm delete john-tpu-v6e-16 \
   --zone=europe-west4-a --quiet
 ```
 
@@ -110,32 +117,33 @@ gcloud compute tpus tpu-vm delete john-tpu-v6e-8 \
 ### 方式 2: 手动部署
 
 ```bash
-# 1. SSH 到 TPU
-gcloud compute tpus tpu-vm ssh john-tpu-v6e-8 --zone=europe-west4-a
-
-# 2. 克隆代码
+# 1. SSH 到 TPU (所有节点)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a --worker=all --command='
 cd ~ && git clone https://github.com/demon2036/john-tunix.git
 git clone https://github.com/google/tunix.git
-
-# 3. 安装依赖
 cd john-tunix && bash install.sh
+'
 
-# 4. 验证 JAX
+# 2. 验证 JAX (在所有节点)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a --worker=all --command='
 source ~/tunix-venv/bin/activate
-python -c "import jax; print(jax.devices())"  # 应显示 8 个 TPU
+python -c "import jax; print(jax.devices())"
+'
 
-# 5. 运行训练
+# 3. 运行训练 (在所有节点同时执行)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a --worker=all --command='
+source ~/tunix-venv/bin/activate
 export HF_TOKEN="your_token"
-export max_steps=10
-bash scripts/train_qwen3_gsm8k.sh
+cd ~/john-tunix && bash scripts/train_qwen3_gsm8k.sh
+'
 ```
 
 ## 验证 JAX/TPU
 
-正确输出:
+正确输出 (每个节点):
 ```
 Backend: tpu
-Device count: 8
+Device count: 16  # 多主机总共 16 芯片
 Devices: [TpuDevice(id=0, ...), TpuDevice(id=1, ...), ...]
 ```
 
@@ -226,42 +234,48 @@ A: install.sh 中的 `jax.devices()` 在 SSH 会话中可能失败。已修复�
 A:
 ```bash
 # 实时查看
-tail -f ~/train.log
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a \
+  --command='tail -f ~/train.log'
 
-# 或者
-gcloud compute tpus tpu-vm ssh john-tpu-v6e-8 --zone=europe-west4-a \
-  --command='tail -50 ~/train.log'
+# 查看所有节点
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a \
+  --worker=all --command='tail -20 ~/train.log'
 ```
 
 ### Q: 如何停止训练
 
 A:
 ```bash
-# 找进程
-ps aux | grep grpo_main
+# 找进程 (所有节点)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a \
+  --worker=all --command='ps aux | grep grpo_main'
 
-# 杀进程
-kill -9 <PID>
+# 杀进程 (所有节点)
+gcloud compute tpus tpu-vm ssh john-tpu-v6e-16 --zone=europe-west4-a \
+  --worker=all --command='pkill -f grpo_main'
 ```
 
 ## 凭证信息
 
 | 凭证 | 用途 |
 |------|------|
-| HF_TOKEN | 下载 Qwen3-1.7B 模型 |
-| WANDB_API_KEY | 训练日志记录 (可选) |
+| HF_TOKEN | 下载 Qwen3-1.7B 模型 (设置为环境变量) |
+| WANDB_API_KEY | 训练日志记录 (项目: ultrathink) |
+
+**注意**: 凭证应通过环境变量或命令行参数传递，不要保存在代码中。
 
 ## TPU 信息
 
 | 属性 | 值 |
 |------|-----|
-| 名称 | john-tpu-v6e-8 |
+| 名称 | john-tpu-v6e-16 |
 | 备用 | node-1 |
 | 区域 | europe-west4-a |
-| 类型 | v6e-8 (8 芯片, 2x4 拓扑) |
+| 类型 | v6e-16 (16 芯片, 4x4 拓扑, 多主机) |
 | 镜像 | v2-alpha-tpuv6e |
 | 项目 | civil-rarity-482610-s5 |
 | 内存 | 每芯片 ~31 GiB HBM |
+| 多主机 | ✅ 需要 --worker=all |
 
 ## 技术细节
 

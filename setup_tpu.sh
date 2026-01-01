@@ -5,7 +5,7 @@
 set -e
 
 # ============== 配置 ==============
-TPU_NAME="john-tpu-v6e-8"
+TPU_NAME="${TPU_NAME:-john-tpu-v6e-16}"
 ZONE="europe-west4-a"
 PROJECT_ID="${PROJECT_ID:-civil-rarity-482610-s5}"
 REPO_URL="https://github.com/demon2036/john-tunix.git"
@@ -118,4 +118,5 @@ echo ""
 gcloud compute tpus tpu-vm ssh "$TPU_NAME" \
   --zone="$ZONE" \
   --project="$PROJECT_ID" \
+  --worker=all \
   --command="$REMOTE_SCRIPT"
