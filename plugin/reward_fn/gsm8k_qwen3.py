@@ -4,6 +4,8 @@
 import re
 from typing import List
 
+__all__ = ['check_answer', 'format_reward']
+
 
 def _extract_answer(text: str) -> str | None:
     """Extract numerical answer from completion (private helper)."""
