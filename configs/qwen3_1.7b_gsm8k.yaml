@@ -1,20 +1,20 @@
-# Qwen3-1.7B GRPO on GSM8K - Updated Config
+# Qwen3-1.7B GRPO on GSM8K - Memory Optimized Config
 reference_model_config:
   model_name: "qwen3-1.7b"
   model_id: "Qwen/Qwen3-1.7B"
   model_source: "huggingface"
   mesh:
-    shape: "(2,4)"
+    shape: "(8,1)"
     axis_names: "('fsdp','tp')"
 
 actor_model_config:
   mesh:
-    shape: "(2,4)"
+    shape: "(8,1)"  # Full FSDP for memory efficiency
     axis_names: "('fsdp','tp')"
 
 rollout_model_config:
   mesh:
-    shape: "(2,4)"
+    shape: "(8,1)"  # Full FSDP/DP for rollout throughput
     axis_names: "('fsdp','tp')"
 
 tokenizer_config:
