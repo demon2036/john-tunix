@@ -42,18 +42,18 @@ echo "========================================="
 echo "TPU Training Environment Setup"
 echo "========================================="
 
-# 克隆仓库
+# 检查 john-tunix 是否存在 (由 scp 上传)
 cd ~
 if [ ! -d "john-tunix" ]; then
-    echo "Cloning john-tunix repository..."
-    git clone https://github.com/john/john-tunix.git || {
-        echo "ERROR: Failed to clone repository. Make sure it exists on GitHub."
-        exit 1
-    }
+    echo "ERROR: john-tunix directory not found on TPU."
+    echo "Did the SCP upload fail?"
+    exit 1
 fi
+echo "Found john-tunix directory."
 cd john-tunix
 
 # 克隆 tunix（如果需要）
+# Assume tunix should be in home dir
 if [ ! -d "../tunix" ]; then
     echo "Cloning tunix repository..."
     cd ~
@@ -78,6 +78,17 @@ echo "========================================="
 echo "Training completed!"
 echo "========================================="
 EOF
+
+# 获取脚本所在目录
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# 上传当前目录到 TPU
+echo "Uploading local john-tunix directory to TPU..."
+# Ensure target dir exists or scp might behave differently depending on existence
+# We will just scp recursively to ~/john-tunix
+gcloud compute tpus tpu-vm scp --recurse "$SCRIPT_DIR" $TPU_NAME:~/ \
+  --zone=$ZONE \
+  --project=$PROJECT_ID
 
 # 上传并执行脚本
 echo "Uploading training script to TPU..."

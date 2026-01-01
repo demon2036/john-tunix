@@ -1,0 +1,33 @@
+# Qwen3-1.7B GRPO on GSM8K - Minimal Config
+reference_model_config:
+  model_name: "qwen3-1.7b"
+  model_id: "Qwen/Qwen3-1.7B"
+  model_source: "huggingface"
+  mesh:
+    shape: "(2,4)"
+    axis_names: "('fsdp','tp')"
+
+actor_model_config:
+  mesh:
+    shape: "(2,4)"
+    axis_names: "('fsdp','tp')"
+
+rollout_model_config:
+  mesh:
+    shape: "(2,4)"
+    axis_names: "('fsdp','tp')"
+
+tokenizer_config:
+  tokenizer_path: "Qwen/Qwen3-1.7B"
+  tokenizer_type: "huggingface"
+
+dataset_name: "gsm8k"
+data_source: "tfds"
+
+rl_training_config:
+  metrics_logging_options:
+    project_name: "qwen3-grpo-gsm8k"
+    run_name: "qwen3-1.7b-grpo"
+
+reward_functions:
+  - "plugin/reward_fn/gsm8k_qwen3.py"
