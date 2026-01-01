@@ -1,4 +1,4 @@
-# Qwen3-1.7B GRPO on GSM8K - Minimal Config
+# Qwen3-1.7B GRPO on GSM8K - Updated Config
 reference_model_config:
   model_name: "qwen3-1.7b"
   model_id: "Qwen/Qwen3-1.7B"
@@ -23,6 +23,21 @@ tokenizer_config:
 
 dataset_name: "gsm8k"
 data_source: "tfds"
+
+batch_size: 32
+
+grpo_config:
+  num_generations: 8
+  num_iterations: 1
+  beta: 0.08
+  epsilon: 0.2
+
+rollout_config:
+  total_generation_steps: 2048
+  max_prompt_length: 256
+  temperature: 0.9
+  top_p: 1.0
+  top_k: 50
 
 rl_training_config:
   actor_optimizer_config:
