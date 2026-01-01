@@ -34,9 +34,9 @@ pip install --upgrade pip
 echo "Installing JAX for TPU..."
 pip install -U jax[tpu] -f https://storage.googleapis.com/jax-releases/libtpu_releases.html
 
-# 验证 JAX
-python -c "import jax; print(f'JAX version: {jax.__version__}'); print(f'JAX devices: {jax.devices()}')"
-echo "✅ JAX installed"
+# 验证 JAX（仅检查版本，跳过 TPU 设备检测 - SSH 会话中可能失败）
+python -c "import jax; print(f'JAX version: {jax.__version__}')"
+echo "✅ JAX installed (TPU device check skipped - will verify at training time)"
 
 # 4. 安装 Flax 和其他 JAX 依赖
 echo "Installing Flax, Optax, Chex..."
